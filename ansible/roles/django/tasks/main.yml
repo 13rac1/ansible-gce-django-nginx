@@ -1,0 +1,26 @@
+---
+
+- name: install the package requirements
+  apt: pkg={{ item }} state=latest
+  with_items:
+   - python3
+   - python3-pip
+
+- name: create django group
+  group: name=django state=present
+
+- name: create django user
+  user: name=django group=django
+
+- name: create application directory
+  file: path={{ app_dir }} state=directory mode=0755 owner=django group=django
+
+- name: install application
+  copy: src=../hello_world/ dest={{ app_dir }} owner=django group=django
+
+ # todo: Virtualenv
+- name: setup requirements
+  pip: requirements={{ app_dir }}/requirements.txt executable=pip3
+
+- name: copy upstart script
+  template: src=roles/django/templates/hello_world.conf dest=/etc/init/hello_world.conf mode=0644
