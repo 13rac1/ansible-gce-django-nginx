@@ -2,4 +2,8 @@
 .env
 *.pyc
 hello_world/db.sqlite3
+gce-key.pem
+gce-key.p12
+secrets.py
+
 
