@@ -1,0 +1,23 @@
+---
+- name: Create a sandbox instance
+  hosts: localhost
+  vars:
+    names: debian-test
+    machine_type: n1-standard-1
+    image: debian-7
+    zone: us-central1-a
+  tasks:
+    - name: Launch instances
+      local_action: gce instance_names={{names}} machine_type={{machine_type}}
+                    image={{image}} zone={{zone}}
+      register: gce
+    - name: Wait for SSH to come up
+      local_action: wait_for host={{item.public_ip}} port=22 delay=10
+                    timeout=60 state=started
+      with_items: gce.instance_data
+
+    - name: Terminate instances that were previously launched
+      local_action:
+        module: gce
+        state: 'absent'
+        instance_names: gce.instance_names
