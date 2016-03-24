@@ -18,9 +18,13 @@
 - name: install application
   copy: src=../hello_world/ dest={{ app_dir }} owner=django group=django
 
- # todo: Virtualenv
+  # todo: Virtualenv
 - name: setup requirements
   pip: requirements={{ app_dir }}/requirements.txt executable=pip3
 
 - name: copy upstart script
   template: src=roles/django/templates/hello_world.conf dest=/etc/init/hello_world.conf mode=0644
+
+  # todo: Make handler
+- name: restart gunicorn
+  service: name=hello_world state=restarted

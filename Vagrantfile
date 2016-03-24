@@ -34,6 +34,7 @@ Vagrant.configure(2) do |config|
   config.vm.define "proxy" do |proxy|
     proxy.vm.network "private_network", ip: "192.168.10.20"
     proxy.vm.provision "ansible" do |ansible|
+      ansible.extra_vars = {django_ip:"192.168.10.10"}
       ansible.playbook = "ansible/proxy-playbook.yml"
     end
   end

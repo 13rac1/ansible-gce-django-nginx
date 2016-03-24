@@ -1,0 +1,19 @@
+---
+
+- name: install the package requirements
+  apt: pkg={{ item }} state=latest
+  with_items:
+   - nginx
+
+- name: install nginx conf
+  template: src=roles/proxy/templates/nginx-hello-world dest=/etc/nginx/sites-available/hello-world mode=0644
+
+- name: disable default conf
+  file: path=/etc/nginx/sites-enabled/default state=absent
+
+- name: enable hello-world conf
+  file: path=/etc/nginx/sites-enabled/hello-world src=/etc/nginx/sites-available/hello-world state=link
+
+# todo: Make handlers
+- name: restart nginx
+  service: name=nginx state=reloaded
