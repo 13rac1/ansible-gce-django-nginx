@@ -1,4 +1,5 @@
-env
+.vagrant
+.env
 *.pyc
 hello_world/db.sqlite3
 
