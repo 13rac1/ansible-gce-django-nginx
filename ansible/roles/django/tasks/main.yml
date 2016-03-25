@@ -18,6 +18,9 @@
 - name: install application
   copy: src=../hello_world/ dest={{ app_dir }} owner=django group=django
 
+- name: enable run.sh
+  file: path={{ app_dir }}/run.sh mode=0755
+
   # todo: Virtualenv
 - name: setup requirements
   pip: requirements={{ app_dir }}/requirements.txt executable=pip3

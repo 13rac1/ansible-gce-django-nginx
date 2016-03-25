@@ -1,0 +1,81 @@
+---
+- hosts: localhost
+  vars:
+    machine_type: n1-standard-1
+    image: ubuntu-1404-trusty-v20160314
+    zone: us-central1-a
+  tasks:
+    - name: launch hello-world-django
+      local_action: gce instance_names=hello-world-django machine_type={{machine_type}}
+                    image={{image}} zone={{zone}}
+      register: gce_django
+
+    - name: wait for SSH to come up
+      local_action: wait_for host={{item.public_ip}} port=22 delay=10
+                    timeout=60 state=started
+      with_items: '{{gce_django.instance_data}}'
+
+    - name: name host django
+      add_host: hostname={{item.public_ip}} groups=django
+      with_items: '{{gce_django.instance_data}}'
+
+    # todo: Replace with private IP
+    - name: Store django public IP
+      set_fact: django_ip='{{item.public_ip}}'
+      with_items: '{{gce_django.instance_data}}'
+
+    - name: launch hello-world-proxy
+      local_action: gce instance_names=hello-world-proxy machine_type={{machine_type}}
+                    image={{image}} zone={{zone}}
+      register: gce_proxy
+
+    - name: wait for SSH to come up
+      local_action: wait_for host={{item.public_ip}} port=22 delay=10
+                    timeout=60 state=started
+      with_items: '{{gce_proxy.instance_data}}'
+
+    - name: name host proxy
+      add_host: hostname={{ item.public_ip }} groups=proxy
+      with_items: '{{gce_proxy.instance_data}}'
+
+# todo: Run on private subnet
+- name: open port 80 on django
+  hosts: django
+  gather_facts: no
+  tasks:
+    - name: Allow HTTP
+      local_action:
+        module: gce_net
+        name: default
+        allowed: tcp:80
+        fwname: all-http
+
+- name: setup django role
+  hosts: django
+  connection: ssh
+  sudo: True
+  vars:
+    app_dir: /opt/django
+  roles:
+    - django
+
+- name: open port 80 on proxy
+  hosts: proxy
+  gather_facts: no
+  tasks:
+    - name: Allow HTTP
+      local_action:
+        module: gce_net
+        name: default
+        allowed: tcp:80
+        fwname: all-http
+
+- name: setup proxy role
+  hosts: proxy
+  connection: ssh
+  sudo: True
+  vars:
+    django_port: 80
+    django_ip: '{{hostvars["localhost"]["django_ip"]}}'
+  roles:
+    - proxy
